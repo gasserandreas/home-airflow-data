@@ -1,0 +1,3 @@
+# airflow generated files
+logs/
+dags/__pycache__/
