@@ -103,6 +103,26 @@ def MyStromCoffeeInitDB():
     """,
   )
 
-  create_mystrom_coffee_table >> create_mystrom_coffee_view_usage >> create_mystrom_coffee_view_usage_hourly >> create_mystrom_coffee_view_usage_daily
+  create_mystrom_coffee_view_usage_weekly = SQLExecuteQueryOperator(
+    task_id="create_mystrom_coffee_view_usage_weekly",
+    conn_id="airflow_data",
+    sql="""
+      CREATE OR REPLACE VIEW mystrom_coffee_usage_weekly AS
+      SELECT
+        MAX(max_power) AS max_power,
+        SUM(watt_per_day) AS watt_per_week,
+        SUM(costs_per_day) AS costs_per_week,
+        BOOL_OR(power_on) AS power_on,
+        EXTRACT(YEAR FROM date) AS year,
+        EXTRACT(WEEK FROM date) AS week_number,
+        MIN(date) AS week_start_date,
+        MAX(date) AS week_end_date
+      FROM mystrom_coffee_usage_daily
+      GROUP BY EXTRACT(YEAR FROM date), EXTRACT(WEEK FROM date)
+      ORDER BY year DESC, week_number DESC;
+    """,
+  )
+
+  create_mystrom_coffee_table >> create_mystrom_coffee_view_usage >> create_mystrom_coffee_view_usage_hourly >> create_mystrom_coffee_view_usage_daily >> create_mystrom_coffee_view_usage_weekly
 
 dag = MyStromCoffeeInitDB()
